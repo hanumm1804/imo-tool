@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --fsl-orange:       #DF6014;
+  --fsl-dark-blue:    #1E2247;
+  --fsl-mid-blue:     #113190;
+  --fsl-bright-blue:  #2844C4;
+  --fsl-light-blue:   #6CB1DB;
+  --fsl-gray:         #ECF1F5;
+  --fsl-white:        #FFFFFF;
+  --fsl-black:        #000000;
+  --status-green:     #16A34A;
+  --status-red:       #DC2626;
+  --status-amber:     #D97706;
+  --status-gray:      #6B7280;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic';
+}
+
+body {
+  background-color: var(--fsl-gray);
+  color: var(--fsl-black);
+}
+
+@layer utilities {
+  .fsl-gradient {
+    background: linear-gradient(135deg, #1E2247 0%, #113190 60%, #2844C4 100%);
+  }
+
+  .text-fsl-orange { color: var(--fsl-orange); }
+  .text-fsl-dark-blue { color: var(--fsl-dark-blue); }
+  .bg-fsl-gray { background-color: var(--fsl-gray); }
+
+  .rag-green { color: var(--status-green); }
+  .rag-amber { color: var(--status-amber); }
+  .rag-red   { color: var(--status-red); }
+  .rag-gray  { color: var(--status-gray); }
+}

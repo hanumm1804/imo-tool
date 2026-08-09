@@ -1,0 +1,417 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  // PHASE_2_SWAP: add azureAdId String @unique after Azure AD activation
+  // PHASE_2_SWAP: passwordHash becomes optional (SSO users have no password)
+  passwordHash      String?
+  role              String   @default("VIEWER")
+  title             String?
+  department        String?
+  avatarUrl         String?
+  isActive          Boolean  @default(true)
+  mustResetPassword Boolean  @default(false)
+  isDealTeamOnly    Boolean  @default(false)
+  lastLoginAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  dealsAsImoLead       Deal[]               @relation("ImoLead")
+  dealsAsExecSponsor   Deal[]               @relation("ExecSponsor")
+  createdDeals         Deal[]               @relation("CreatedBy")
+  workstreamsAsFslLead Workstream[]         @relation("FslLead")
+  ownedTasks           Task[]
+  ownedSynergyLines    SynergyLine[]
+  ownedRaidEntries     RAIDEntry[]
+  madeDecisions        DecisionEntry[]
+  ownedActions         ActionEntry[]
+  ownedRisks           RiskEntry[]
+  resourceAllocations  ResourceAllocation[]
+  tollgateSignoffs     DealPhase[]
+}
+
+model Deal {
+  id                    String      @id @default(cuid())
+  name                  String
+  acquiredCompanyName   String
+  sector                String?
+  description           String?
+  status                String      @default("PRE_CLOSE")
+  currentPhase          Int         @default(1)
+  overallRag            String      @default("GRAY")
+  acquisitionDate       DateTime?
+  closedDate            DateTime?
+  isSensitive           Boolean     @default(false)
+  sharepointSiteUrl     String?
+  sharepointLibrary     String?
+  sharepointConnected   Boolean     @default(false)
+  sharepointSiteId      String?
+  sharepointDriveId     String?
+  sharepointConnectedBy String?
+  sharepointConnectedAt DateTime?
+  createdById           String
+  createdBy             User        @relation("CreatedBy",   fields: [createdById],   references: [id])
+  imoLeadId             String?
+  imoLead               User?       @relation("ImoLead",     fields: [imoLeadId],     references: [id])
+  execSponsorId         String?
+  execSponsor           User?       @relation("ExecSponsor", fields: [execSponsorId], references: [id])
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  charter             IntegrationCharter?
+  narrative           DealNarrative?
+  phases              DealPhase[]
+  workstreams         Workstream[]
+  tasks               Task[]
+  synergyLines        SynergyLine[]
+  headcountLines      HeadcountLine[]
+  headcountNotes      String?
+  raidEntries         RAIDEntry[]
+  decisionEntries     DecisionEntry[]
+  actionEntries       ActionEntry[]
+  riskEntries         RiskEntry[]
+  lensAssessments     PreAcquisitionLens[]
+  resourceAllocations ResourceAllocation[]
+  sensitiveAccessList DealSensitiveAccess[]
+  auditLogs           AppAuditLog[]
+
+  @@index([name])
+  @@index([status])
+  @@index([overallRag])
+}
+
+model DealSensitiveAccess {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  userId    String
+  grantedAt DateTime @default(now())
+
+  @@unique([dealId, userId])
+}
+
+model IntegrationCharter {
+  id                      String    @id @default(cuid())
+  dealId                  String    @unique
+  deal                    Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  revenueSynergyTargetUSD Float?
+  costSynergyTargetUSD    Float?
+  ebitdaTarget12m         Float?
+  ebitdaTarget24m         Float?
+  valueRealisationLead    String?
+  techLead                String?
+  changeCommsLead         String?
+  execSteerCoCadence      String?
+  workingSteerCoCadence   String?
+  integrationPrinciples   String?
+  isComplete              Boolean   @default(false)
+  signedOffBy             String?
+  signedOffAt             DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+}
+
+model DealNarrative {
+  id                        String   @id @default(cuid())
+  dealId                    String   @unique
+  deal                      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  valuationAndDealStructure String?
+  dueDiligence              String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model DealPhase {
+  id                    String      @id @default(cuid())
+  dealId                String
+  deal                  Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  phaseNumber           Int
+  phaseName             String
+  driveTag              String
+  timeframeLabel        String
+  plannedStartDate      DateTime?
+  plannedEndDate        DateTime?
+  actualStartDate       DateTime?
+  actualEndDate         DateTime?
+  status                String      @default("NOT_STARTED")
+  tollgateName          String
+  tollgateDescription   String
+  tollgateComplete      Boolean     @default(false)
+  tollgateSignedOffById String?
+  tollgateSignedOffBy   User?       @relation(fields: [tollgateSignedOffById], references: [id])
+  tollgateSignedOffAt   DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  tollgateItems TollgateItem[]
+
+  @@unique([dealId, phaseNumber])
+  @@index([dealId])
+}
+
+model TollgateItem {
+  id            String     @id @default(cuid())
+  phaseId       String
+  phase         DealPhase  @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  label         String
+  isMandatory   Boolean    @default(true)
+  isComplete    Boolean    @default(false)
+  completedById String?
+  completedAt   DateTime?
+  createdAt     DateTime   @default(now())
+
+  @@index([phaseId])
+}
+
+model Workstream {
+  id             String    @id @default(cuid())
+  dealId         String
+  deal           Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  isActive       Boolean   @default(true)
+  isCustom       Boolean   @default(false)
+  rag            String    @default("GRAY")
+  fslLeadId      String?
+  fslLead        User?     @relation("FslLead", fields: [fslLeadId], references: [id])
+  acquiredCoLead String?
+  description    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tasks         Task[]
+  raidEntries   RAIDEntry[]
+  actionEntries ActionEntry[]
+  riskEntries   RiskEntry[]
+  resources     ResourceAllocation[]
+
+  @@unique([dealId, code])
+  @@index([dealId])
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  dealId       String
+  deal         Deal       @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  workstreamId String
+  workstream   Workstream @relation(fields: [workstreamId], references: [id])
+  parentId     String?
+  parent       Task?      @relation("TaskChildren", fields: [parentId], references: [id])
+  children     Task[]     @relation("TaskChildren")
+  wbsNumber    String?
+  level        Int        @default(3)
+  sortOrder    Int        @default(0)
+  title        String
+  description  String?
+  ownerId      String?
+  owner        User?      @relation(fields: [ownerId], references: [id])
+  startDate    DateTime?
+  endDate      DateTime?
+  durationDays Int?
+  percentDone  Int        @default(0)
+  status       String     @default("NOT_STARTED")
+  rag          String     @default("GRAY")
+  priority     String     @default("MEDIUM")
+  phaseNumber  Int?
+  dependsOnId  String?
+  completedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([dealId])
+  @@index([workstreamId])
+  @@index([parentId])
+}
+
+model SynergyLine {
+  id                  String              @id @default(cuid())
+  dealId              String
+  deal                Deal                @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  title               String
+  category            String
+  revenueBucket       String?
+  ownerId             String?
+  owner               User?               @relation(fields: [ownerId], references: [id])
+  baselineUSD         Float               @default(0)
+  committedUSD        Float               @default(0)
+  realisedUSD         Float               @default(0)
+  status              String              @default("WATCH")
+  benefitsFunnelStage String              @default("IDENTIFIED")
+  financeValidated    Boolean             @default(false)
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([dealId])
+}
+
+model RAIDEntry {
+  id            String      @id @default(cuid())
+  dealId        String
+  deal          Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  workstreamId  String?
+  workstream    Workstream? @relation(fields: [workstreamId], references: [id])
+  type          String
+  title         String
+  description   String?
+  ownerId       String?
+  owner         User?       @relation(fields: [ownerId], references: [id])
+  dueDate       DateTime?
+  priority      String      @default("MEDIUM")
+  status        String      @default("OPEN")
+  resolvedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([dealId])
+}
+
+model DecisionEntry {
+  id               String    @id @default(cuid())
+  dealId           String
+  deal             Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  title            String
+  context          String?
+  decisionMade     String
+  decisionMakerId  String?
+  decisionMaker    User?     @relation(fields: [decisionMakerId], references: [id])
+  decidedAt        DateTime?
+  rationale        String?
+  impactWorkstream String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([dealId])
+}
+
+model ActionEntry {
+  id             String      @id @default(cuid())
+  dealId         String
+  deal           Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  workstreamId   String?
+  workstream     Workstream? @relation(fields: [workstreamId], references: [id])
+  title          String
+  description    String?
+  ownerId        String?
+  owner          User?       @relation(fields: [ownerId], references: [id])
+  dueDate        DateTime?
+  priority       String      @default("MEDIUM")
+  status         String      @default("OPEN")
+  closedAt       DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([dealId])
+}
+
+model RiskEntry {
+  id             String      @id @default(cuid())
+  dealId         String
+  deal           Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  workstreamId   String?
+  workstream     Workstream? @relation(fields: [workstreamId], references: [id])
+  description    String
+  likelihood     String      @default("MEDIUM")
+  impact         String      @default("MEDIUM")
+  riskScore      Int
+  mitigation     String?
+  ownerId        String?
+  owner          User?       @relation(fields: [ownerId], references: [id])
+  status         String      @default("OPEN")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([dealId])
+}
+
+model PreAcquisitionLens {
+  id                      String     @id @default(cuid())
+  dealId                  String
+  deal                    Deal       @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  lensNumber              Int
+  lensName                String
+  benchmarks              String?
+  status                  String     @default("TBD")
+  notes                   String?
+  assessedById            String?
+  assessedAt              DateTime?
+  strategicOverrideActive Boolean    @default(false)
+  overrideNotes           String?
+  boardSignOffDate        DateTime?
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+
+  @@unique([dealId, lensNumber])
+  @@index([dealId])
+}
+
+model ResourceAllocation {
+  id              String      @id @default(cuid())
+  dealId          String
+  deal            Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  workstreamId    String?
+  workstream      Workstream? @relation(fields: [workstreamId], references: [id])
+  roleDescription String?
+  allocationPct   Int?
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([dealId, userId, workstreamId])
+  @@index([dealId])
+}
+
+model AppSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AppAuditLog {
+  id         String   @id @default(cuid())
+  dealId     String?
+  deal       Deal?    @relation(fields: [dealId], references: [id])
+  userId     String?
+  userName   String?
+  action     String
+  entityType String
+  entityId   String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model HeadcountLine {
+  id               String   @id @default(cuid())
+  dealId           String
+  deal             Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  department       String
+  headcountReduced Int      @default(0)
+  peopleExpenseUSD Float    @default(0)
+  otherExpenseUSD  Float    @default(0)
+  notes            String?
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([dealId])
+}
