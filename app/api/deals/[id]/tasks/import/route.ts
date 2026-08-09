@@ -92,13 +92,17 @@ export async function POST(
     const users   = await prisma.user.findMany({ select: { id: true, name: true } })
     const userMap = new Map(users.map(u => [(u.name ?? '').toLowerCase(), u.id]))
 
-    // Pre-generate IDs so parent references can be resolved before any DB call
-    const wbsToId = new Map<string, string>()
-    for (const t of body.tasks) {
-      if (t.wbs) wbsToId.set(t.wbs, randomUUID())
-    }
+    // Generate one UUID per task by index — guaranteed unique, no WBS collision risk
+    const taskIds = body.tasks.map(() => randomUUID())
 
-    // Delete existing tasks (fast single operation)
+    // Build wbsToId using first occurrence of each WBS (for parent resolution)
+    const wbsToId = new Map<string, string>()
+    body.tasks.forEach((t, i) => {
+      if (t.wbs && !wbsToId.has(t.wbs)) wbsToId.set(t.wbs, taskIds[i]!)
+    })
+
+    // Nullify parentId first to avoid self-referential FK constraint on delete
+    await prisma.task.updateMany({ where: { dealId: params.id }, data: { parentId: null } })
     await prisma.task.deleteMany({ where: { dealId: params.id } })
 
     // Build all rows in memory, then bulk-insert in one round-trip
@@ -120,7 +124,7 @@ export async function POST(
         ? t.priority as Priority : Priority.MEDIUM
 
       return {
-        id:           wbsToId.get(t.wbs) ?? randomUUID(),
+        id:           taskIds[i]!,
         dealId:       params.id,
         workstreamId: ws.id,
         parentId,
