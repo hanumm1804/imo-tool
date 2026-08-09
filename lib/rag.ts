@@ -13,7 +13,7 @@ export async function recalculateWorkstreamRag(workstreamId: string): Promise<RA
     where: { workstreamId },
     select: { rag: true },
   })
-  return calculateRag(tasks.map(t => t.rag))
+  return calculateRag(tasks.map(t => t.rag as RAGStatus))
 }
 
 export async function recalculateDealRag(dealId: string): Promise<RAGStatus> {
@@ -21,7 +21,7 @@ export async function recalculateDealRag(dealId: string): Promise<RAGStatus> {
     where: { dealId, isActive: true },
     select: { rag: true },
   })
-  return calculateRag(workstreams.map(w => w.rag))
+  return calculateRag(workstreams.map(w => w.rag as RAGStatus))
 }
 
 export async function cascadeRagUpdate(
@@ -38,7 +38,7 @@ export async function cascadeRagUpdate(
       where: { workstreamId: task.workstreamId },
       select: { rag: true },
     })
-    const wsRag = calculateRag(wsTasks.map(t => t.rag))
+    const wsRag = calculateRag(wsTasks.map(t => t.rag as RAGStatus))
 
     await tx.workstream.update({
       where: { id: task.workstreamId },
@@ -49,7 +49,7 @@ export async function cascadeRagUpdate(
       where: { dealId: task.dealId, isActive: true },
       select: { rag: true },
     })
-    const dealRag = calculateRag(dealWorkstreams.map(w => w.rag))
+    const dealRag = calculateRag(dealWorkstreams.map(w => w.rag as RAGStatus))
 
     await tx.deal.update({
       where: { id: task.dealId },
