@@ -158,7 +158,7 @@ function GanttRow({ task, rangeStart, totalDays }: {
   const widthPct = Math.max(0.5, rightPct - leftPct)
 
   const barColor = task.level === 3
-    ? RAG_BAR_COLORS[task.rag]
+    ? RAG_BAR_COLORS[task.rag as RAGStatus]
     : LEVEL_BAR_COLORS[task.level] ?? 'bg-gray-400'
 
   const progressPct = task.status === 'COMPLETE' ? 100 : task.status === 'IN_PROGRESS' ? 50 : 0
