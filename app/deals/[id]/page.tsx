@@ -277,7 +277,7 @@ export default function DealExecutiveSummaryPage() {
             <h1 className="text-xl font-bold text-[var(--fsl-dark-blue)]">{deal.name}</h1>
             <p className="text-sm text-gray-500">{deal.sector}</p>
           </div>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[deal.status]}`}>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[deal.status as DealStatus]}`}>
             {deal.status.replace('_', ' ')}
           </span>
           <RAGChip rag={deal.overallRag} />
