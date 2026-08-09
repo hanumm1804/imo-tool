@@ -182,8 +182,8 @@ export async function PATCH(
     }
 
     // Recalculate riskScore if likelihood or impact changed
-    const newLikelihood = body.likelihood ?? existing.likelihood
-    const newImpact     = body.impact     ?? existing.impact
+    const newLikelihood = (body.likelihood ?? existing.likelihood) as RiskLevel
+    const newImpact     = (body.impact     ?? existing.impact)     as RiskLevel
     const newRiskScore  = computeRiskScore(newLikelihood, newImpact)
 
     const updated = await prisma.$transaction(async (tx) => {

@@ -190,7 +190,7 @@ export async function PATCH(
 
     // Guard: advancing COMMITTED → REALISED requires financeValidated=true
     const advancingToRealised =
-      existing.benefitsFunnelStage === BenefitsFunnelStage.COMMITTED &&
+      (existing.benefitsFunnelStage as BenefitsFunnelStage) === BenefitsFunnelStage.COMMITTED &&
       body.benefitsFunnelStage === BenefitsFunnelStage.REALISED
 
     if (advancingToRealised && body.financeValidated !== true) {

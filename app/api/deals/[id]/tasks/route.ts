@@ -266,7 +266,7 @@ export async function PATCH(
     }
 
     // If RAG is changing, use cascadeRagUpdate (handles the whole hierarchy)
-    const ragChanging = body.rag !== undefined && body.rag !== existing.rag
+    const ragChanging = body.rag !== undefined && body.rag !== (existing.rag as RAGStatus)
 
     if (ragChanging) {
       await cascadeRagUpdate(taskId, body.rag!)
