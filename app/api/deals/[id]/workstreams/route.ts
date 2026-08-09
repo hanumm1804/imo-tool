@@ -12,6 +12,7 @@ const CreateWorkstreamSchema = z.object({
   name:        z.string().min(1).max(200),
   description: z.string().optional(),
   fslLeadId:   z.string().optional(),
+  isCustom:    z.boolean().optional(),
 })
 
 const UpdateWorkstreamSchema = z.object({
@@ -110,7 +111,7 @@ export async function POST(
           name:        body.name,
           description: body.description,
           fslLeadId:   body.fslLeadId,
-          isCustom:    true,
+          isCustom:    body.isCustom ?? false,
         },
       })
 

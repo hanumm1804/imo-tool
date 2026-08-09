@@ -20,6 +20,7 @@ export interface CreateWorkstreamInput {
   description?: string
   fslLeadId?:   string
   sortOrder?:   number
+  isCustom?:    boolean
 }
 
 export interface UpdateWorkstreamInput {
