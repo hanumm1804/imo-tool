@@ -14,7 +14,7 @@ import { SkeletonLoader } from '@/components/shared/SkeletonLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import type { ActionWithRelations } from '@/hooks/useLogs'
-import { Role } from '@/types'
+import { LogStatus, Priority, Role } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,8 +115,10 @@ function ActionDrawer({
     e.preventDefault()
     const payload = {
       ...form,
-      dueDate: form.dueDate ? new Date(form.dueDate).toISOString() : undefined,
-      ownerId: form.ownerId || undefined,
+      dueDate:  form.dueDate ? new Date(form.dueDate).toISOString() : undefined,
+      ownerId:  form.ownerId || undefined,
+      status:   form.status as LogStatus,
+      priority: form.priority as Priority,
     }
     if (editTarget) {
       await updateAction.mutateAsync({ actionId: editTarget.id, body: payload })
