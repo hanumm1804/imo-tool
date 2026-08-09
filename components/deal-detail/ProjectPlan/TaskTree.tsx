@@ -49,7 +49,7 @@ function aggregateRag(tasks: TaskWithRelations[], parentId: string | null, child
   const children = childrenMap.get(parentId) ?? []
   if (children.length === 0) {
     const task = tasks.find((t) => t.id === parentId)
-    return task?.rag ?? RAGStatus.GRAY
+    return (task?.rag as RAGStatus) ?? RAGStatus.GRAY
   }
   const childRags = children.map((c) => aggregateRag(tasks, c.id, childrenMap))
   if (childRags.includes(RAGStatus.RED))   return RAGStatus.RED
@@ -155,12 +155,12 @@ function TaskRow({
         </div>
       </td>
       <td className="px-3 py-2">
-        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[task.status]}`}>
+        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[task.status as TaskStatus]}`}>
           {task.status.replace('_', ' ')}
         </span>
       </td>
       <td className="px-3 py-2">
-        <RAGChip rag={level === 3 ? task.rag : aggregateRagStatus} />
+        <RAGChip rag={level === 3 ? task.rag as RAGStatus : aggregateRagStatus} />
       </td>
     </tr>
   )
