@@ -37,27 +37,43 @@ function Section({ title, description, children }: {
 
 function DealInfoSection({ dealId, canEdit }: { dealId: string; canEdit: boolean }) {
   const { data: deal, isLoading } = useDeal(dealId)
-  const updateDeal = useUpdateDeal(dealId)
+  const updateDeal  = useUpdateDeal(dealId)
+  const { data: allUsers = [] } = useAllUsers()
 
-  const [editing,      setEditing]      = useState(false)
-  const [name,         setName]         = useState('')
-  const [sector,       setSector]       = useState('')
-  const [description,  setDescription]  = useState('')
+  const [editing,        setEditing]        = useState(false)
+  const [name,           setName]           = useState('')
+  const [sector,         setSector]         = useState('')
+  const [description,    setDescription]    = useState('')
+  const [imoLeadId,      setImoLeadId]      = useState<string>('')
+  const [execSponsorId,  setExecSponsorId]  = useState<string>('')
 
   function startEdit() {
     if (!deal) return
     setName(deal.name ?? '')
     setSector(deal.sector ?? '')
     setDescription(deal.description ?? '')
+    setImoLeadId((deal as any).imoLead?.id ?? '')
+    setExecSponsorId((deal as any).execSponsor?.id ?? '')
     setEditing(true)
   }
 
   async function saveEdit() {
-    await updateDeal.mutateAsync({ name, sector, description })
+    await updateDeal.mutateAsync({
+      name,
+      sector,
+      description,
+      imoLeadId:     imoLeadId     || null,
+      execSponsorId: execSponsorId || null,
+    })
     setEditing(false)
   }
 
+  const selectClass = "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[var(--fsl-bright-blue)] focus:outline-none bg-white"
+
   if (isLoading) return <SkeletonLoader variant="card" />
+
+  const imoLeadName     = (deal as any)?.imoLead?.name
+  const execSponsorName = (deal as any)?.execSponsor?.name
 
   return (
     <Section title="Deal Information" description="Basic details for this deal.">
@@ -78,6 +94,26 @@ function DealInfoSection({ dealId, canEdit }: { dealId: string; canEdit: boolean
               onChange={(e) => setSector(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[var(--fsl-bright-blue)] focus:outline-none"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">IMO Lead</label>
+              <select value={imoLeadId} onChange={(e) => setImoLeadId(e.target.value)} className={selectClass}>
+                <option value="">— Unassigned —</option>
+                {allUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Deal Sponsor</label>
+              <select value={execSponsorId} onChange={(e) => setExecSponsorId(e.target.value)} className={selectClass}>
+                <option value="">— Unassigned —</option>
+                {allUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
@@ -104,11 +140,13 @@ function DealInfoSection({ dealId, canEdit }: { dealId: string; canEdit: boolean
       ) : (
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
               <div><span className="text-xs text-gray-400">Name:</span> <span className="font-medium">{deal?.name}</span></div>
               <div><span className="text-xs text-gray-400">Acquired Company:</span> <span className="font-medium">{(deal as any)?.acquiredCompanyName ?? '—'}</span></div>
               <div><span className="text-xs text-gray-400">Sector:</span> <span>{deal?.sector ?? '—'}</span></div>
               <div><span className="text-xs text-gray-400">Status:</span> <span>{deal?.status}</span></div>
+              <div><span className="text-xs text-gray-400">IMO Lead:</span> <span className="font-medium">{imoLeadName ?? '—'}</span></div>
+              <div><span className="text-xs text-gray-400">Deal Sponsor:</span> <span className="font-medium">{execSponsorName ?? '—'}</span></div>
             </div>
             {canEdit && (
               <button
