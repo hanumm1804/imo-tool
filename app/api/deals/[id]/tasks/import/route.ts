@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
+import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -91,16 +92,17 @@ export async function POST(
     const users   = await prisma.user.findMany({ select: { id: true, name: true } })
     const userMap = new Map(users.map(u => [(u.name ?? '').toLowerCase(), u.id]))
 
+    // Pre-generate IDs so parent references can be resolved before any DB call
     const wbsToId = new Map<string, string>()
-    let created = 0
+    for (const t of body.tasks) {
+      if (t.wbs) wbsToId.set(t.wbs, randomUUID())
+    }
 
-    // Delete existing tasks first (fast single operation, no transaction needed)
+    // Delete existing tasks (fast single operation)
     await prisma.task.deleteMany({ where: { dealId: params.id } })
 
-    // Create tasks sequentially outside a transaction to avoid Neon P2028 timeout
-    for (let i = 0; i < body.tasks.length; i++) {
-      const t = body.tasks[i]!
-
+    // Build all rows in memory, then bulk-insert in one round-trip
+    const rows = body.tasks.map((t, i) => {
       const ws      = (t.workstreamName ? wsMap.get(t.workstreamName.toLowerCase()) : null) ?? defaultWs
       const ownerId = t.ownerName ? (userMap.get(t.ownerName.toLowerCase()) ?? null) : null
 
@@ -117,31 +119,30 @@ export async function POST(
       const priority = Object.values(Priority).includes(t.priority as Priority)
         ? t.priority as Priority : Priority.MEDIUM
 
-      const task = await prisma.task.create({
-        data: {
-          dealId:       params.id,
-          workstreamId: ws.id,
-          parentId,
-          wbsNumber:    t.wbs     || null,
-          level:        t.level,
-          title:        t.title,
-          description:  t.description  ?? null,
-          ownerId,
-          startDate:    t.startDate ? new Date(t.startDate) : null,
-          endDate:      t.endDate   ? new Date(t.endDate)   : null,
-          durationDays: t.durationDays ?? null,
-          percentDone:  t.percentDone  ?? 0,
-          dependsOnId:  t.dependsOnId  ?? null,
-          status,
-          rag,
-          priority,
-          sortOrder:    i,
-        },
-      })
+      return {
+        id:           wbsToId.get(t.wbs) ?? randomUUID(),
+        dealId:       params.id,
+        workstreamId: ws.id,
+        parentId,
+        wbsNumber:    t.wbs     || null,
+        level:        t.level,
+        title:        t.title,
+        description:  t.description  ?? null,
+        ownerId,
+        startDate:    t.startDate ? new Date(t.startDate) : null,
+        endDate:      t.endDate   ? new Date(t.endDate)   : null,
+        durationDays: t.durationDays ?? null,
+        percentDone:  t.percentDone  ?? 0,
+        dependsOnId:  t.dependsOnId  ?? null,
+        status,
+        rag,
+        priority,
+        sortOrder:    i,
+      }
+    })
 
-      if (t.wbs) wbsToId.set(t.wbs, task.id)
-      created++
-    }
+    await prisma.task.createMany({ data: rows })
+    const created = rows.length
 
     return NextResponse.json({ data: { created } }, { status: 201 })
   } catch (err) {
