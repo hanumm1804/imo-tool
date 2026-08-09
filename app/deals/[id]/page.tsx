@@ -221,8 +221,8 @@ export default function DealExecutiveSummaryPage() {
     const l3 = tasks.filter((t) => t.level === 3)
     return {
       totalTasks:  tasks.length,
-      tasksGreen:  l3.filter((t) => t.rag === RAGStatus.GREEN).length,
-      tasksRed:    l3.filter((t) => t.rag === RAGStatus.RED).length,
+      tasksGreen:  l3.filter((t) => (t.rag as RAGStatus) === RAGStatus.GREEN).length,
+      tasksRed:    l3.filter((t) => (t.rag as RAGStatus) === RAGStatus.RED).length,
     }
   }, [tasks])
 
@@ -266,7 +266,7 @@ export default function DealExecutiveSummaryPage() {
     )
   }
 
-  const currentPhase = deal.phases.find((p) => p.status === PhaseStatus.IN_PROGRESS)
+  const currentPhase = deal.phases.find((p) => (p.status as PhaseStatus) === PhaseStatus.IN_PROGRESS)
 
   return (
     <div className="px-6 py-6 space-y-6">
@@ -280,7 +280,7 @@ export default function DealExecutiveSummaryPage() {
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[deal.status as DealStatus]}`}>
             {deal.status.replace('_', ' ')}
           </span>
-          <RAGChip rag={deal.overallRag} />
+          <RAGChip rag={deal.overallRag as RAGStatus} />
         </div>
         <div className="flex items-center gap-3">
           {currentPhase && (
@@ -307,7 +307,7 @@ export default function DealExecutiveSummaryPage() {
           Integration Phases
         </h2>
         <div className="rounded-lg border border-gray-200 bg-white px-6 py-4 shadow-sm">
-          <PhaseStepper phases={deal.phases} />
+          <PhaseStepper phases={deal.phases.map(p => ({ ...p, status: p.status as PhaseStatus }))} />
         </div>
       </section>
 

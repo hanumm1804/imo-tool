@@ -151,7 +151,7 @@ function RAGStatusSection({ dealId, canEdit }: { dealId: string; canEdit: boolea
               <button
                 key={s}
                 onClick={() => setRag(s)}
-                disabled={deal?.overallRag === s || updateDeal.isPending}
+                disabled={(deal?.overallRag as RAGStatus) === s || updateDeal.isPending}
                 className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-40 ${
                   s === RAGStatus.GREEN ? 'bg-green-100 text-green-700 hover:bg-green-200' :
                   s === RAGStatus.AMBER ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
@@ -186,9 +186,9 @@ function DealStatusSection({ dealId, canEdit }: { dealId: string; canEdit: boole
           <button
             key={s}
             onClick={canEdit ? () => updateDeal.mutateAsync({ status: s }) : undefined}
-            disabled={!canEdit || deal?.status === s}
+            disabled={!canEdit || (deal?.status as DealStatus) === s}
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed ${
-              deal?.status === s
+              (deal?.status as DealStatus) === s
                 ? 'bg-[var(--fsl-dark-blue)] text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50'
             }`}
@@ -261,14 +261,14 @@ function DealStageSection({ dealId, canEdit }: { dealId: string; canEdit: boolea
       )}
       <div className="flex flex-wrap gap-2">
         {phases.map((phase) => {
-          const isActive   = phase.status === PhaseStatus.IN_PROGRESS
-          const isComplete = phase.status === PhaseStatus.COMPLETE
+          const isActive   = (phase.status as PhaseStatus) === PhaseStatus.IN_PROGRESS
+          const isComplete = (phase.status as PhaseStatus) === PhaseStatus.COMPLETE
           return (
             <button
               key={phase.id}
               onClick={canEdit ? () => setStage(phase.phaseNumber) : undefined}
               disabled={!canEdit || saving || isActive}
-              title={PHASE_STATUS_LABEL[phase.status]}
+              title={PHASE_STATUS_LABEL[phase.status as PhaseStatus]}
               className={`flex flex-col items-center rounded-lg border-2 px-4 py-3 text-xs font-medium transition-colors ${
                 isActive
                   ? 'border-[var(--fsl-orange)] bg-[var(--fsl-orange)] text-white'
@@ -842,9 +842,9 @@ function DangerZone({ dealId, canEdit }: { dealId: string; canEdit: boolean }) {
 
   if (!canEdit) return null
 
-  const isClosed    = deal?.status === DealStatus.CLOSED
-  const isOnHold    = deal?.status === DealStatus.ON_HOLD
-  const isCancelled = deal?.status === DealStatus.CANCELLED
+  const isClosed    = (deal?.status as DealStatus) === DealStatus.CLOSED
+  const isOnHold    = (deal?.status as DealStatus) === DealStatus.ON_HOLD
+  const isCancelled = (deal?.status as DealStatus) === DealStatus.CANCELLED
 
   return (
     <Section title="Danger Zone">

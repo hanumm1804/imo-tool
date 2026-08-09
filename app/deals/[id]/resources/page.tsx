@@ -225,22 +225,22 @@ export default function ResourcesPage() {
       const mine = tasks.filter(t => t.ownerId === r.user.id)
       let barRed = 0, barAmber = 0, barGreen = 0, barCompleted = 0, barNotStarted = 0, barOther = 0
       for (const t of mine) {
-        if      (t.status === TaskStatus.COMPLETE)     barCompleted++
-        else if (t.status === TaskStatus.NOT_STARTED)  barNotStarted++
-        else if (t.rag    === RAGStatus.RED)            barRed++
-        else if (t.rag    === RAGStatus.AMBER)          barAmber++
-        else if (t.rag    === RAGStatus.GREEN)          barGreen++
+        if      ((t.status as TaskStatus) === TaskStatus.COMPLETE)     barCompleted++
+        else if ((t.status as TaskStatus) === TaskStatus.NOT_STARTED)  barNotStarted++
+        else if ((t.rag    as RAGStatus)  === RAGStatus.RED)           barRed++
+        else if ((t.rag    as RAGStatus)  === RAGStatus.AMBER)         barAmber++
+        else if ((t.rag    as RAGStatus)  === RAGStatus.GREEN)         barGreen++
         else                                            barOther++
       }
       return {
         userId:          r.user.id,
         name:            r.user.name,
         totalTasks:      mine.length,
-        redTasks:        mine.filter(t => t.rag    === RAGStatus.RED).length,
-        amberTasks:      mine.filter(t => t.rag    === RAGStatus.AMBER).length,
-        greenTasks:      mine.filter(t => t.rag    === RAGStatus.GREEN).length,
-        completedTasks:  mine.filter(t => t.status === TaskStatus.COMPLETE).length,
-        notStartedTasks: mine.filter(t => t.status === TaskStatus.NOT_STARTED).length,
+        redTasks:        mine.filter(t => (t.rag    as RAGStatus)  === RAGStatus.RED).length,
+        amberTasks:      mine.filter(t => (t.rag    as RAGStatus)  === RAGStatus.AMBER).length,
+        greenTasks:      mine.filter(t => (t.rag    as RAGStatus)  === RAGStatus.GREEN).length,
+        completedTasks:  mine.filter(t => (t.status as TaskStatus) === TaskStatus.COMPLETE).length,
+        notStartedTasks: mine.filter(t => (t.status as TaskStatus) === TaskStatus.NOT_STARTED).length,
         barRed, barAmber, barGreen, barCompleted, barNotStarted, barOther,
       }
     })
@@ -324,15 +324,15 @@ export default function ResourcesPage() {
                     <td className="px-4 py-3 text-sm text-gray-700">{ws.fslLead?.name ?? '—'}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{wsTasks.length}</td>
                     <td className="px-4 py-3 text-sm font-medium text-[var(--status-green)]">
-                      {wsTasks.filter(t => t.rag === RAGStatus.GREEN).length}
+                      {wsTasks.filter(t => (t.rag as RAGStatus) === RAGStatus.GREEN).length}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-[var(--status-amber)]">
-                      {wsTasks.filter(t => t.rag === RAGStatus.AMBER).length}
+                      {wsTasks.filter(t => (t.rag as RAGStatus) === RAGStatus.AMBER).length}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-[var(--status-red)]">
-                      {wsTasks.filter(t => t.rag === RAGStatus.RED).length}
+                      {wsTasks.filter(t => (t.rag as RAGStatus) === RAGStatus.RED).length}
                     </td>
-                    <td className="px-4 py-3"><RAGChip rag={ws.rag} /></td>
+                    <td className="px-4 py-3"><RAGChip rag={ws.rag as RAGStatus} /></td>
                   </tr>
                 )
               })}

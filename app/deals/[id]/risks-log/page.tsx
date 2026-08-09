@@ -190,9 +190,9 @@ function RiskDrawer({
   const [form, setForm] = useState<RiskFormState>({
     description: editTarget?.description ?? '',
     ownerId:     editTarget?.ownerId     ?? '',
-    likelihood:  editTarget?.likelihood  ?? RiskLevel.MEDIUM,
-    impact:      editTarget?.impact      ?? RiskLevel.MEDIUM,
-    status:      editTarget?.status      ?? LogStatus.OPEN,
+    likelihood:  (editTarget?.likelihood as RiskLevel) ?? RiskLevel.MEDIUM,
+    impact:      (editTarget?.impact     as RiskLevel) ?? RiskLevel.MEDIUM,
+    status:      (editTarget?.status     as LogStatus) ?? LogStatus.OPEN,
     mitigation:  editTarget?.mitigation  ?? '',
   })
 
@@ -378,8 +378,8 @@ function RisksTable({
               )}
             </td>
             <td className="px-4 py-3 text-sm text-gray-700">{risk.owner?.name ?? '—'}</td>
-            <td className="px-4 py-3 text-sm text-gray-700">{LEVEL_LABEL[risk.likelihood]}</td>
-            <td className="px-4 py-3 text-sm text-gray-700">{LEVEL_LABEL[risk.impact]}</td>
+            <td className="px-4 py-3 text-sm text-gray-700">{LEVEL_LABEL[risk.likelihood as RiskLevel]}</td>
+            <td className="px-4 py-3 text-sm text-gray-700">{LEVEL_LABEL[risk.impact as RiskLevel]}</td>
             <td className="px-4 py-3">
               <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${scoreColor(risk.riskScore)}`}>
                 {risk.riskScore}
@@ -455,11 +455,11 @@ export default function RisksLogPage() {
 
   // Split into active vs resolved/closed
   const activeRisks   = useMemo(() =>
-    filtered.filter((r) => r.status === LogStatus.OPEN || r.status === LogStatus.IN_PROGRESS),
+    filtered.filter((r) => (r.status as LogStatus) === LogStatus.OPEN || (r.status as LogStatus) === LogStatus.IN_PROGRESS),
     [filtered]
   )
   const resolvedRisks = useMemo(() =>
-    filtered.filter((r) => r.status === LogStatus.RESOLVED || r.status === LogStatus.CLOSED),
+    filtered.filter((r) => (r.status as LogStatus) === LogStatus.RESOLVED || (r.status as LogStatus) === LogStatus.CLOSED),
     [filtered]
   )
 

@@ -114,7 +114,7 @@ function LineRow({
   const captured = Number(line.realisedUSD) > 0
     ? Math.round((Number(line.realisedUSD) / Math.max(1, Number(line.baselineUSD))) * 100)
     : 0
-  const statusBadge = STATUS_BADGE[line.status] ?? { label: line.status, cls: 'bg-gray-100 text-gray-600' }
+  const statusBadge = STATUS_BADGE[line.status as SynergyStatus] ?? { label: line.status, cls: 'bg-gray-100 text-gray-600' }
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50">
@@ -240,11 +240,11 @@ function EditLineModal({
 
   const [form, setForm] = useState<LineFormState>({
     title:        editTarget?.title        ?? '',
-    category:     editTarget?.category     ?? defaultCategory,
+    category:     (editTarget?.category as SynergyCategory) ?? defaultCategory,
     baselineUSD:  editTarget?.baselineUSD  ?? 0,
     committedUSD: editTarget?.committedUSD ?? 0,
     realisedUSD:  editTarget?.realisedUSD  ?? 0,
-    status:       editTarget?.status       ?? SynergyStatus.ON_TRACK,
+    status:       (editTarget?.status as SynergyStatus) ?? SynergyStatus.ON_TRACK,
     notes:        editTarget?.notes        ?? '',
   })
 
@@ -704,8 +704,8 @@ export default function SynergyTrackerPage() {
 
   const { costLines, revenueLines, costTotals, revenueTotals } = useMemo(() => {
     const allLines     = lines ?? []
-    const costLines    = allLines.filter((l) => l.category === SynergyCategory.COST)
-    const revenueLines = allLines.filter((l) => l.category === SynergyCategory.REVENUE)
+    const costLines    = allLines.filter((l) => (l.category as SynergyCategory) === SynergyCategory.COST)
+    const revenueLines = allLines.filter((l) => (l.category as SynergyCategory) === SynergyCategory.REVENUE)
     return {
       costLines,
       revenueLines,
