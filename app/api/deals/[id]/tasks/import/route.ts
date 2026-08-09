@@ -94,58 +94,54 @@ export async function POST(
     const wbsToId = new Map<string, string>()
     let created = 0
 
-    await prisma.$transaction(
-      async (tx) => {
-        // Replace mode: delete all existing tasks for this deal first
-        await tx.task.deleteMany({ where: { dealId: params.id } })
+    // Delete existing tasks first (fast single operation, no transaction needed)
+    await prisma.task.deleteMany({ where: { dealId: params.id } })
 
-        for (let i = 0; i < body.tasks.length; i++) {
-          const t = body.tasks[i]!
+    // Create tasks sequentially outside a transaction to avoid Neon P2028 timeout
+    for (let i = 0; i < body.tasks.length; i++) {
+      const t = body.tasks[i]!
 
-          const ws      = (t.workstreamName ? wsMap.get(t.workstreamName.toLowerCase()) : null) ?? defaultWs
-          const ownerId = t.ownerName ? (userMap.get(t.ownerName.toLowerCase()) ?? null) : null
+      const ws      = (t.workstreamName ? wsMap.get(t.workstreamName.toLowerCase()) : null) ?? defaultWs
+      const ownerId = t.ownerName ? (userMap.get(t.ownerName.toLowerCase()) ?? null) : null
 
-          let parentId: string | null = null
-          if (t.wbs?.includes('.')) {
-            const parentWbs = t.wbs.split('.').slice(0, -1).join('.')
-            parentId = wbsToId.get(parentWbs) ?? null
-          }
+      let parentId: string | null = null
+      if (t.wbs?.includes('.')) {
+        const parentWbs = t.wbs.split('.').slice(0, -1).join('.')
+        parentId = wbsToId.get(parentWbs) ?? null
+      }
 
-          const status   = Object.values(TaskStatus).includes(t.status as TaskStatus)
-            ? t.status as TaskStatus : TaskStatus.NOT_STARTED
-          const rag      = Object.values(RAGStatus).includes(t.rag as RAGStatus)
-            ? t.rag as RAGStatus     : RAGStatus.GRAY
-          const priority = Object.values(Priority).includes(t.priority as Priority)
-            ? t.priority as Priority : Priority.MEDIUM
+      const status   = Object.values(TaskStatus).includes(t.status as TaskStatus)
+        ? t.status as TaskStatus : TaskStatus.NOT_STARTED
+      const rag      = Object.values(RAGStatus).includes(t.rag as RAGStatus)
+        ? t.rag as RAGStatus     : RAGStatus.GRAY
+      const priority = Object.values(Priority).includes(t.priority as Priority)
+        ? t.priority as Priority : Priority.MEDIUM
 
-          const task = await tx.task.create({
-            data: {
-              dealId:       params.id,
-              workstreamId: ws.id,
-              parentId,
-              wbsNumber:    t.wbs     || null,
-              level:        t.level,
-              title:        t.title,
-              description:  t.description  ?? null,
-              ownerId,
-              startDate:    t.startDate ? new Date(t.startDate) : null,
-              endDate:      t.endDate   ? new Date(t.endDate)   : null,
-              durationDays: t.durationDays ?? null,
-              percentDone:  t.percentDone  ?? 0,
-              dependsOnId:  t.dependsOnId  ?? null,
-              status,
-              rag,
-              priority,
-              sortOrder:    i,
-            },
-          })
+      const task = await prisma.task.create({
+        data: {
+          dealId:       params.id,
+          workstreamId: ws.id,
+          parentId,
+          wbsNumber:    t.wbs     || null,
+          level:        t.level,
+          title:        t.title,
+          description:  t.description  ?? null,
+          ownerId,
+          startDate:    t.startDate ? new Date(t.startDate) : null,
+          endDate:      t.endDate   ? new Date(t.endDate)   : null,
+          durationDays: t.durationDays ?? null,
+          percentDone:  t.percentDone  ?? 0,
+          dependsOnId:  t.dependsOnId  ?? null,
+          status,
+          rag,
+          priority,
+          sortOrder:    i,
+        },
+      })
 
-          if (t.wbs) wbsToId.set(t.wbs, task.id)
-          created++
-        }
-      },
-      { timeout: 30_000 }
-    )
+      if (t.wbs) wbsToId.set(t.wbs, task.id)
+      created++
+    }
 
     return NextResponse.json({ data: { created } }, { status: 201 })
   } catch (err) {
