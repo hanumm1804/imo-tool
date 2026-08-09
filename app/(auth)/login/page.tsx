@@ -1,35 +1,10 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { LoginForm } from './LoginForm'
 
 export const metadata: Metadata = {
   title:       'Sign In — IMO Tool',
   description: 'Sign in to the Firstsource IMO Tool',
-}
-
-function FirstsourceLogoWhite() {
-  return (
-    <svg
-      width="160"
-      height="36"
-      viewBox="0 0 160 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <text
-        x="0"
-        y="27"
-        fontFamily="'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic'"
-        fontSize="22"
-        fontWeight="700"
-        fill="white"
-        letterSpacing="-0.5"
-      >
-        firstsource
-      </text>
-    </svg>
-  )
 }
 
 export default function LoginPage() {
@@ -43,7 +18,14 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-6 text-center">
           {/* Logo */}
           <div aria-label="Firstsource logo">
-            <FirstsourceLogoWhite />
+            <Image
+              src="/FSL-Logo_1.png"
+              alt="Firstsource"
+              width={180}
+              height={52}
+              className="brightness-0 invert"
+              priority
+            />
           </div>
 
           {/* Divider */}
