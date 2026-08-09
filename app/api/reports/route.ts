@@ -183,10 +183,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         dealName:        deal.name,
         dealCode:        deal.acquiredCompanyName,
         resourceCount:   deal.resourceAllocations.length,
-        totalAllocation: deal.resourceAllocations.reduce((s, r) => s + r.allocationPct, 0),
+        totalAllocation: deal.resourceAllocations.reduce((s, r) => s + (r.allocationPct ?? 0), 0),
         avgAllocation:   deal.resourceAllocations.length > 0
           ? Math.round(
-              deal.resourceAllocations.reduce((s, r) => s + r.allocationPct, 0) /
+              deal.resourceAllocations.reduce((s, r) => s + (r.allocationPct ?? 0), 0) /
               deal.resourceAllocations.length
             )
           : 0,
